@@ -55,7 +55,44 @@ app.post('/api/login', async (req, res) => {
         res.status(500).json({ message: 'Internal server error' });
     }
 });
+app.get('/users', async (req, res) => {
+    const token = req.headers.authorization?.split(' ')[1]; // Получаем токен из заголовка
+    if (!token) {
+        return res.status(401).json({ message: 'Unauthorized' });
+    }
 
+    try {
+        const decoded = jwt.verify(token, 'your_jwt_secret');
+        const user = await User.findById(decoded.id).select('-password'); // Не возвращаем пароль
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+        res.json(user);
+    } catch (error) {
+        res.status(401).json({ message: 'Invalid token' });
+    }
+});
+
+app.get('/users', async (req, res) => {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) {
+        console.log('No token provided');
+        return res.status(401).json({ message: 'Unauthorized' });
+    }
+
+    try {
+        const decoded = jwt.verify(token, 'your_jwt_secret');
+        const user = await User.findById(decoded.id).select('-password');
+        if (!user) {
+            console.log('User not found:', decoded.id);
+            return res.status(404).json({ message: 'User not found' });
+        }
+        res.json(user);
+    } catch (error) {
+        console.error('Token verification error:', error);
+        res.status(401).json({ message: 'Invalid token' });
+    }
+});
 // Запуск сервера
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
